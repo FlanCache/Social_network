@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,4 +21,19 @@ public class UserSigninResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String otp;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private int userId;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userFullName;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userEmail;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userPhone;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userAvatar;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userAddress;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userBirthday;
 }

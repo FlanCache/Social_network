@@ -35,4 +35,9 @@ public interface UserService{
 
 
     ResponseEntity<?> userInfo();
+
+
+    ResponseEntity<?> getUserInfoById(int userId);
+
+    ResponseEntity<?> getUserInfoByEmail(String userEmail);
 }

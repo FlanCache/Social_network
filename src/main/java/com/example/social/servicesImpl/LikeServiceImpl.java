@@ -22,7 +22,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -52,7 +55,7 @@ public class LikeServiceImpl implements LikeService {
                 likeResponse.setMessage(CommonMessage.LIKE_FRIEND_REQUEST);
                 return new ResponseEntity<>(likeResponse, HttpStatus.BAD_REQUEST);
             }
-            Like like = likeCheck(postId,currentUser.getUserId());
+            Like like = likeCheck(postId, currentUser.getUserId());
             if (like.getLikeStatus().equals(LikeStatus.LIKE)) {
                 like.setLikeStatus(LikeStatus.UNLIKE);
                 like.setLikeCreatedTime(null);
@@ -75,16 +78,33 @@ public class LikeServiceImpl implements LikeService {
     }
 
     @Override
-    public Like likeCheck(int postId,int userId){
+    public Like likeCheck(int postId, int userId) {
         Like like = new Like();
 
-        if (!likeRepository.existsLikeByLikePostIdAndLikeUserId(postId,userId)) {
+        if (!likeRepository.existsLikeByLikePostIdAndLikeUserId(postId, userId)) {
             like.setLikePostId(postId);
             like.setLikeUserId(userId);
             like.setLikeStatus(LikeStatus.UNLIKE);
-        }else {
-            like = likeRepository.findByLikePostIdAndLikeUserId(postId,userId );
+        } else {
+            like = likeRepository.findByLikePostIdAndLikeUserId(postId, userId);
         }
         return like;
+    }
+
+    @Override
+    public List<User> getUsersWhoLikedPost(int postId) {
+        List<Like> likes = likeRepository.findByLikePostId(postId);  // Tìm tất cả các like với postId này
+        List<User> users = new ArrayList<>();
+        for (Like like : likes) {
+            Optional<User> user = userRepository.findById((long) like.getLikeUserId());  // Tìm user từ like
+            user.ifPresent(users::add);
+        }
+        return users;
+    }
+
+    @Override
+    public boolean hasUserLikedPost(int postId, int userId) {
+        Like like = likeRepository.findByLikePostIdAndLikeUserId(postId, userId);
+        return like != null && like.getLikeStatus() == LikeStatus.LIKE;
     }
 }

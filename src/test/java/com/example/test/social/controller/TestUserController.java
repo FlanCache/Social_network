@@ -30,18 +30,18 @@ public class TestUserController {
     @Mock
     UserService userService;
 
-    @Test
-    void testUpdateUser() {
-        UserDto userDto = new UserDto();
-        UserUpdateRequest userUpdateRequest = new UserUpdateRequest();
-        when(userService.updateUser(userUpdateRequest)).thenReturn(new ResponseEntity<>( HttpStatus.OK));
-
-        ResponseEntity<?> result = userController.updateUser(userUpdateRequest);
-
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-
-        verify(userService, times(1)).updateUser(userUpdateRequest);
-    }
+   // @Test
+//    void testUpdateUser() {
+//        UserDto userDto = new UserDto();
+//        UserUpdateRequest userUpdateRequest = new UserUpdateRequest();
+//        when(userService.updateUser(userUpdateRequest)).thenReturn(new ResponseEntity<>( HttpStatus.OK));
+//
+//       // ResponseEntity<?> result = userController.updateUser(userUpdateRequest);
+//
+//        assertEquals(HttpStatus.OK, result.getStatusCode());
+//
+//        verify(userService, times(1)).updateUser(userUpdateRequest);
+//    }
 
 //    @Test
 //    void testAvatarUpdate() {

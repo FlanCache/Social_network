@@ -28,7 +28,6 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -262,7 +261,40 @@ public class PostServiceImpl implements PostService {
         return new ResponseEntity<>(CommonMessage.NOT_ENOUGHT_PERMISSION, HttpStatus.UNAUTHORIZED);
     }
 
+    @Override
+    public ResponseEntity<?> getPostByUserId(int page, int size, int userId){
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    LocalDateTime timeCanSeePost = LocalDateTime.now().minusHours(5);
+    Response response = new Response();
+    TimelineResponse timelineResponse = new TimelineResponse();
+    Page<Post> postsList;
+    Page<PostDto> postDtoList;
 
+    Pageable pageable = PageRequest.of(page, size);
+
+    if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        User currentUser = userRepository.findByUserEmail(username).orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
+        List<Integer> listFriendIds = new ArrayList<>();
+        listFriendIds.add(userId);
+        List<PostDto> listPostDto = new ArrayList<>();
+        List<Post> listPost = postRepository.findByPostUserIdInAndPostDeleteFlagOrderByPostCreateTimeDesc(listFriendIds, 0, pageable);
+        timelineResponse.setTotalRecords(postRepository.countPostsByPostUserIdAndPostDeleteFlag(currentUser.getUserId(), 0));
+        for (Post post : listPost) {
+            PostDto postDto = (PostMapper.INSTANCE.postToDto(post));
+            postDto.setPostImages(imageRepository.findByPostIdAndImageDeleteFlag(post.getPostId(), 0));
+            postDto.setPostComments(commentRepository.findCommentsByCommentPostIdAndCommentDeleteFlag(post.getPostId(), 0));
+            postDto.setLike(likeRepository.countLikeByLikePostIdAndLikeStatus(post.getPostId(), LikeStatus.LIKE));
+            listPostDto.add(postDto);
+        }
+        timelineResponse.setListPosts(listPostDto);
+        response.setData(timelineResponse);
+        response.setMessage(CommonMessage.SUCCESS);
+        System.out.println(response);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    return new ResponseEntity<>(CommonMessage.SIGNIN_FIRST, HttpStatus.UNAUTHORIZED);
+}
     @Override
     public ResponseEntity<?> timeLineByPage(int page, int size) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -280,7 +312,7 @@ public class PostServiceImpl implements PostService {
             List<Integer> listFriendIds = new ArrayList<>(friendShipService.getListFriendId(currentUser.getUserId()));
             listFriendIds.add(currentUser.getUserId());
             List<PostDto> listPostDto = new ArrayList<>();
-            List<Post> listPost = postRepository.findByPostUserIdInAndPostDeleteFlagOrderByPostCreateTime(listFriendIds, 0, pageable);
+            List<Post> listPost = postRepository.findByPostUserIdInAndPostDeleteFlagOrderByPostCreateTimeDesc(listFriendIds, 0, pageable);
             timelineResponse.setTotalRecords(postRepository.countPostsByPostUserIdAndPostDeleteFlag(currentUser.getUserId(), 0));
             for (Post post : listPost) {
                 PostDto postDto = (PostMapper.INSTANCE.postToDto(post));

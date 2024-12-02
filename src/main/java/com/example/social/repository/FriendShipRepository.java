@@ -27,4 +27,8 @@ List<FriendShip> findAllByUserSenderIdOrUserReceiverIdAndRelationShip(int userSe
 
     @Query("SELECT COUNT(p) FROM FriendShip p WHERE (p.relationCreateTime >= :oneWeekAgo) AND ((p.userSenderId = :UserId) OR (p.userReceiverId = :UserId)) AND (p.relationShip = :relationStatus)")
     int countFriendsInLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, @Param("UserId") int userId , @Param("relationStatus") RelationStatus relationStatus);
+
+    Optional<FriendShip> findByUserSenderIdAndUserReceiverId(int userSenderId, int userReceiverId);
+    boolean existsByUserSenderIdAndUserReceiverId(int userSenderId, int userReceiverId);
+
 }

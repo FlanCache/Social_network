@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/auth")
 public class AuthController {
     @Autowired
@@ -25,7 +26,7 @@ public class AuthController {
         return userService.signUp(sigupRequest);
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/login")
     public ResponseEntity<?> signin(@Valid @RequestBody SigninRequest signinRequest) {
         return userService.signIn(signinRequest);
     }

@@ -10,6 +10,7 @@ import com.example.social.dto.request.authRequest.SigupRequest;
 import com.example.social.dto.request.userRequest.UserUpdateRequest;
 import com.example.social.dto.response.userResponse.*;
 import com.example.social.entity.User;
+import com.example.social.jwt.JwtUltils;
 import com.example.social.repository.*;
 import com.example.social.services.OtpServices;
 import com.example.social.services.PostService;
@@ -35,12 +36,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 
 @Service
@@ -55,7 +58,8 @@ public class UserServiceImpl implements UserService {
     AuthenticationManager authenticationManager;
     @Autowired
     OtpServices otpServices;
-
+    @Autowired
+    JwtUltils jwtUltils;
     @Autowired
     FilesStorageService filesStorageService;
 
@@ -97,18 +101,36 @@ public class UserServiceImpl implements UserService {
         String currentUserEmail = signinRequest.getEmail();
         String currentUserPassword = signinRequest.getPassword();
         Response response = new Response();
-        UserSigninResponse userSigninResponse = new UserSigninResponse();
+        UserSigninResponse userResponse = new UserSigninResponse();
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(currentUserEmail, currentUserPassword)
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String otp = otpServices.otpSender(currentUserEmail).getOtp();
-        response.setMessage(CommonMessage.OTP_EXPIRE);
-        userSigninResponse.setOtp(otp);
-        response.setData(userSigninResponse);
+        //response.setMessage(CommonMessage.OTP_EXPIRE);
+        //userSigninResponse.setOtp(otp);
+        //response.setData(userSigninResponse);
+        User currentUser = userRepository.findByUserEmail(signinRequest.getEmail())
+                .orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
+        String userToken = jwtUltils.generateToken(currentUser.getUserEmail());
+        userResponse.setToken(userToken);
+        //currentUser.setUserOtp(null);
+        //Gan thong tin cho reponse
+        response.setMessage(CommonMessage.SUCCESS);
+        userResponse.setUserBirthday(currentUser.getUserBirthday());
+        userResponse.setUserAddress(currentUser.getUserAddress());
+        userResponse.setUserAvatar(currentUser.getUserAvatar());
+        userResponse.setUserEmail(currentUserEmail);
+        userResponse.setUserPhone(currentUser.getUserPhone());
+        userResponse.setUserFullName(currentUser.getUserFullName());
+        userResponse.setUserId(currentUser.getUserId());
+        response.setData(userResponse);
+        System.out.println(response);
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
+
+        //return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Override
@@ -153,6 +175,34 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+//    @Override
+//    public ResponseEntity<?> avatarUpdate(MultipartFile file) {
+//        if (filesStorageService.photoFormatCheck(file)) {
+//            return new ResponseEntity<>(CommonMessage.FILE_FORMAT_ERROR, HttpStatus.BAD_REQUEST);
+//        }
+//        if (!filesStorageService.isFileSizeValid(file, ConstResouce.AVATAR_FILE_SIZE)) {
+//            return new ResponseEntity<>(CommonMessage.FILE_SIZE_ERROR, HttpStatus.BAD_REQUEST);
+//        }
+//
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//
+//        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+//            String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+//            Resource resource;
+//            User currentUser = userRepository.findByUserEmail(username).orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
+//            try {
+//                String image = filesStorageService.save(file);
+//                currentUser.setUserAvatar(image);
+//                userRepository.save(currentUser);
+//                resource = filesStorageService.load(image);
+//                return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(resource);
+//            } catch (Exception e) {
+//                String message = CommonMessage.FILE_UPLOAD_ERROR + e.getMessage();
+//                return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//        }
+//        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+//    }
     @Override
     public ResponseEntity<?> avatarUpdate(MultipartFile file) {
         if (filesStorageService.photoFormatCheck(file)) {
@@ -166,22 +216,24 @@ public class UserServiceImpl implements UserService {
 
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
             String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-            Resource resource;
             User currentUser = userRepository.findByUserEmail(username).orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
             try {
                 String image = filesStorageService.save(file);
                 currentUser.setUserAvatar(image);
                 userRepository.save(currentUser);
-                resource = filesStorageService.load(image);
-                return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(resource);
+
+                byte[] imageBytes = Files.readAllBytes(Path.of("uploads", image));
+                String contentType = Files.probeContentType(Path.of("uploads", image));
+                return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(imageBytes);
+
             } catch (Exception e) {
+
                 String message = CommonMessage.FILE_UPLOAD_ERROR + e.getMessage();
                 return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
-
     @Override
     public ResponseEntity<?> forgotPassword(String userEmail) {
         User user = userRepository.findByUserEmail(userEmail).orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
@@ -266,6 +318,62 @@ public class UserServiceImpl implements UserService {
         userResponse.setMessage(CommonMessage.SIGNIN_FIRST);
         return new ResponseEntity<>(userResponse, HttpStatus.UNAUTHORIZED);
     }
+
+    @Override
+    public ResponseEntity<?> getUserInfoById(int userId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserResponse userResponse = new UserResponse();
+        Response response = new Response();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            User currentUser = userRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
+            UserInfoResponse userInfoResponse = getUserInfoResponse(currentUser);
+            response.setMessage(CommonMessage.SUCCESS);
+            response.setData(userInfoResponse);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        userResponse.setMessage(CommonMessage.SIGNIN_FIRST);
+        return new ResponseEntity<>(userResponse, HttpStatus.UNAUTHORIZED);
+    }
+//    @Override
+//    public ResponseEntity<?> getUserInfoByEmail(String userEmail) {
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        UserResponse userResponse = new UserResponse();
+//        Response response = new Response();
+//        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+//            User currentUser = userRepository.findByUserEmail(userEmail).orElseThrow(() -> new NoSuchElementException(CommonMessage.USER_NOT_FOUND));
+//            UserInfoResponse userInfoResponse = getUserInfoResponse(currentUser);
+//            response.setMessage(CommonMessage.SUCCESS);
+//            response.setData(userInfoResponse);
+//            return new ResponseEntity<>(response, HttpStatus.OK);
+//        }
+//        userResponse.setMessage(CommonMessage.SIGNIN_FIRST);
+//        return new ResponseEntity<>(userResponse, HttpStatus.UNAUTHORIZED);
+//    }
+@Override
+public ResponseEntity<?> getUserInfoByEmail(String userEmail) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Response response = new Response();
+
+    if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+        Optional<User> optionalUser = userRepository.findByUserEmail(userEmail);
+
+        if (optionalUser.isPresent()) {
+            User currentUser = optionalUser.get();
+            UserInfoResponse userInfoResponse = getUserInfoResponse(currentUser);
+            response.setMessage(CommonMessage.SUCCESS);
+            response.setData(userInfoResponse);
+        } else {
+            // Nếu không tìm thấy người dùng, trả về đối tượng trống
+            response.setMessage(CommonMessage.USER_NOT_FOUND);
+            response.setData(new UserInfoResponse()); // Trả về đối tượng trống
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    response.setMessage(CommonMessage.SIGNIN_FIRST);
+    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+}
+
 
     private static UserInfoResponse getUserInfoResponse(User currentUser) {
         UserInfoResponse userInfoResponse = new UserInfoResponse();

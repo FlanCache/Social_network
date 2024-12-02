@@ -20,5 +20,7 @@ public interface FilesStorageService {
 
     Boolean photoFormatCheck(MultipartFile file);
 
-    Boolean isFileSizeValid(MultipartFile file,int size);
+    Boolean isPhotoFormatInvalid(MultipartFile file);
+
+    Boolean isFileSizeValid(MultipartFile file, int size);
 }

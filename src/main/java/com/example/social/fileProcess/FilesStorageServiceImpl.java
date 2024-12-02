@@ -1,11 +1,7 @@
 package com.example.social.fileProcess;
-import com.example.social.common.AvatarOrPostImgFlag;
-import com.example.social.common.ConstResouce;
-import com.example.social.dto.response.Response;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,13 +13,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
-
 @Service
-
-public class FilesStorageServiceImpl implements FilesStorageService {
-
+    public class FilesStorageServiceImpl implements FilesStorageService {
     private final Path root = Paths.get("uploads");
-
 
     public static final List<String> SUPPORTED_IMAGE_TYPES = Arrays.asList(
             MediaType.IMAGE_JPEG_VALUE,
@@ -35,35 +27,49 @@ public class FilesStorageServiceImpl implements FilesStorageService {
         try {
             Files.createDirectories(root);
         } catch (IOException e) {
-            throw new RuntimeException("Could not initialize folder for upload!");
+            throw new RuntimeException("Could not initialize folder for upload!", e);
         }
     }
 
     @Override
     public String save(MultipartFile file) {
         try {
-            Path filePath = this.root.resolve(Objects.requireNonNull(file.getOriginalFilename()));
+            if (file.isEmpty()) {
+                throw new RuntimeException("Cannot upload an empty file.");
+            }
+
+            // Kiểm tra tên file trùng lặp
+            String originalFileName = Objects.requireNonNull(file.getOriginalFilename());
+            Path filePath = root.resolve(originalFileName);
+
+            // Nếu file đã tồn tại thì thêm hậu tố để tránh ghi đè
+            String resolvedName = resolveFileNameConflict(filePath);
+            filePath = root.resolve(resolvedName);
+
+            // Lưu file vào thư mục uploads
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             return filePath.toString();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("Could not upload the file. Error: " + e.getMessage(), e);
         }
     }
 
     @Override
     public Resource load(String filename) {
-        String path = ConstResouce.PATH_ROOT;
         try {
-            Path file = root.resolve(path+filename);
+            if (filename.contains("..")) {
+                throw new RuntimeException("Invalid path sequence: " + filename);
+            }
+            Path file = root.resolve(filename).normalize();
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException("Could not read the file!");
+                throw new RuntimeException("Could not read the file: " + filename);
             }
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Error: " + e.getMessage());
+            throw new RuntimeException("Error loading file: " + e.getMessage(), e);
         }
     }
 
@@ -77,7 +83,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
         try {
             return Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
         } catch (IOException e) {
-            throw new RuntimeException("Could not load the files!");
+            throw new RuntimeException("Could not load the files!", e);
         }
     }
 
@@ -88,17 +94,27 @@ public class FilesStorageServiceImpl implements FilesStorageService {
     }
 
     @Override
+    public Boolean isPhotoFormatInvalid(MultipartFile file) {
+        return SUPPORTED_IMAGE_TYPES.stream().noneMatch(supportedType ->
+                Objects.equals(file.getContentType(), supportedType));
+    }
+
+    @Override
     public Boolean isFileSizeValid(MultipartFile file, int size) {
         return file.getSize() <= size;
     }
 
-//public ResponseEntity<?> UploadImage(MultipartFile[] file, AvatarOrPostImgFlag flag){
-//    Response response  = new Response();
-//        if (flag.equals(AvatarOrPostImgFlag.AVATAR_UPDATE)){
-//            if (file.length !=1 ){
-//                return
-//            }
-//        }
-//}
+    //Hàm thêm số và kí tự khi trùng tên file
+    private String resolveFileNameConflict(Path filePath) {
+        String fileName = filePath.getFileName().toString();
+        String baseName = fileName.contains(".") ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+        String extension = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')) : "";
+        int counter = 0;
 
+        while (Files.exists(filePath)) {
+            counter++;
+            filePath = root.resolve(baseName + "_" + counter + extension);
+        }
+        return filePath.getFileName().toString();
+    }
 }

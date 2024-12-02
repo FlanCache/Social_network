@@ -120,7 +120,6 @@ public class TestCommentService {
         when(postRepository.findPostsByPostIdAndPostDeleteFlag(commentRequest.getPostId(), 0)).thenReturn(Optional.empty());
 
         NoSuchElementException ex = assertThrows(NoSuchElementException.class, () -> commentService.postComment(commentRequest));
-        ;
         assertEquals(CommonMessage.POST_NOT_FOUND, ex.getMessage());
     }
 

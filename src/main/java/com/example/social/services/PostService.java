@@ -24,5 +24,7 @@ public interface PostService {
 
 
 
+    ResponseEntity<?> getPostByUserId(int page, int size, int userId);
+
     ResponseEntity<?> timeLineByPage(int page, int size);
 }

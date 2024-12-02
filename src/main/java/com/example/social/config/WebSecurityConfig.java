@@ -23,10 +23,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Collections;
-import java.util.function.Function;
+import java.util.Arrays;
 
 
 @Configuration
@@ -37,7 +40,8 @@ public class WebSecurityConfig {
     JwtFilter jwtFilter;
     @Autowired
     AuthEntryPoint authEntryPoint;
-@Autowired
+
+    @Autowired
 
 
     @Bean
@@ -45,15 +49,16 @@ public class WebSecurityConfig {
         return http.csrf(AbstractHttpConfigurer::disable).cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers("/v1/api-docs/swagger-config"
-                                ,"/api-docs/**"
-                                ,"/swagger-ui/**"
-                                ,"/signup","/signin"
-                                ,"/forgotPassword"
-                                ,"/changePassword"
-                                ,"/api/v1/auth/**"
-                                ,"/v1/api-docs"
-                        ,"/swagger-ui/index.html"
-                        ,"/swagger-ui/index.html#/"
+                                , "/api-docs/**"
+                                , "/swagger-ui/**"
+                                , "/signup", "/login"
+                                , "/forgotPassword"
+                                , "/**"
+                                , "/changePassword"
+                                , "/api/v1/auth/**"
+                                , "/v1/api-docs"
+                                , "/swagger-ui/index.html"
+                                , "/swagger-ui/index.html#/"
                         )
                         .permitAll().anyRequest().authenticated())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -84,5 +89,18 @@ public class WebSecurityConfig {
         authenticationProvider.setUserDetailsService(userDetailsService());
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200")); // Add allowed origins
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

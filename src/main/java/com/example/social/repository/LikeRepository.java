@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Integer> {
@@ -15,7 +16,7 @@ public interface LikeRepository extends JpaRepository<Like, Integer> {
 
     Boolean existsLikeByLikePostIdAndLikeUserId(int postId, int userId);
     int countLikeByLikePostIdAndLikeStatus(int postId, LikeStatus likeStatus);
-    Optional<Like> findByLikePostId(int postId);
+    List<Like> findByLikePostId(int postId);
     @Query("SELECT COUNT(p) FROM Like p WHERE (p.likeCreatedTime >= :oneWeekAgo) AND (p.likeUserId = :UserId)")
     int countLikesInLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo,@Param("UserId") int userId);
 }
