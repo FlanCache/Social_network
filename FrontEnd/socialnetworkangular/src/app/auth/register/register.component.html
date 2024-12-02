@@ -1,0 +1,45 @@
+<div class="lg:p-12 max-w-xl lg:my-0 my-12 mx-auto p-6 space-y-">
+  <form class="lg:p-10 p-6 space-y-3 relative bg-white shadow-xl rounded-md" [formGroup]="registerForm" (ngSubmit)="signup()">
+    <h1 class="lg:text-2xl text-xl font-semibold mb-6"> Register </h1>
+
+    <div class="grid lg:grid-cols-2 gap-3">
+      <div>
+        <label class="mb-0"> Full name </label>
+        <input type="text" placeholder="First Name" formControlName="fullName" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+      </div>
+    </div>
+    <div>
+      <label class="mb-0"> Email adress</label>
+      <input type="text" placeholder="Info@example.com" formControlName="email" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+    </div>
+    <div>
+      <label class="mb-0"> Password </label>
+      <input type="password" placeholder="******" formControlName="password" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+    </div>
+    <div>
+      <label class="mb-0"> Confirm Password </label>
+      <input type="password" placeholder="******" formControlName="confirmPassword" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+    </div>
+    <div class="grid lg:grid-cols-2 gap-3">
+      <!-- <div>
+        <label class="mb-0"> Date of birth </label>
+        <input type="date" formControlName="dateOfBirth" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+
+      </div> -->
+      <!-- <div>
+        <label class="mb-0"> Phone:</label>
+        <input type="text" formControlName="mobile" placeholder="03 5445 0543" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+      </div> -->
+    </div>
+    <div>
+      <div *ngIf="signupErr" class="error-message">
+        {{errorSignupMessage}}
+      </div>
+      <button type="submit" class="bg-blue-600 font-semibold p-2 mt-5 rounded-md text-center text-white w-full">
+        Get Started</button>
+    </div>
+  </form>
+
+
+</div>
+

@@ -1,0 +1,40 @@
+/* Styles for modal */
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+  }
+  
+  .confirmNotificationBtn {
+    background-color: #ffcccc; /* Nền đỏ nhạt */
+    border: none; /* Xóa viền */
+    border-radius: 5px; /* Bo góc */
+    padding: 10px 20px; /* Khoảng cách trong */
+    color: #333; /* Màu chữ */
+    font-size: 16px; /* Kích thước chữ */
+    cursor: pointer; /* Con trỏ chuột */
+    transition: background-color 0.3s ease; /* Hiệu ứng khi hover */
+  }
+  
+  .confirmNotificationBtn:hover {
+    background-color: #ff9999; /* Đổi nền khi hover */
+  }
+  a #AddStory_Btn{
+     margin-left: 700px !;
+  }
+  .cus_remove{
+    margin-left: 200px !important;
+  }

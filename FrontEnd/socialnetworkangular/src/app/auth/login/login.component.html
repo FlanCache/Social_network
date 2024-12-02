@@ -1,0 +1,25 @@
+<div class="lg:p-12 max-w-xl lg:my-0 my-12 mx-auto p-6 space-y-">
+
+  <form class="lg:p-10 p-6 space-y-3 relative bg-white shadow-xl rounded-md" [formGroup]="loginForm" (ngSubmit)="login()">
+    <h1 class="lg:text-2xl text-xl font-semibold mb-6"> Login </h1>
+
+    <div>
+      <label class="mb-0"> Username </label>
+      <input type="text" formControlName="email" placeholder="Username" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+    </div>
+
+    <div>
+      <label class="mb-0"> Password </label>
+      <input type="password" formControlName="password" placeholder="******" class="bg-gray-100 h-12 mt-2 px-3 rounded-md w-full">
+    </div>
+      <div><a href="/register">Signup now</a></div>
+    <div>
+      <div *ngIf="loginError" class="error-message">
+        {{errorMessage}}
+      </div>
+      <button type="submit" class="bg-blue-600 font-semibold p-2 mt-5 rounded-md text-center text-white w-full">
+        Login to VI</button>
+    </div>
+  </form>
+
+</div>

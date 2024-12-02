@@ -1,0 +1,24 @@
+input[type="file"] {
+    display: none;
+  }
+  
+  /* Tạo kiểu cho label thay thế */
+  .custom-file-upload {
+    display: inline-block;
+    background-color: #aeafaa;  /* Màu nền nút */
+    color: white;  /* Màu chữ */
+    padding: 10px 20px;  /* Cỡ nút */
+    cursor: pointer;  /* Đổi con trỏ thành pointer khi hover */
+    border-radius: 5px;  /* Bo tròn góc */
+    font-size: 14px;  /* Cỡ chữ */
+    transition: background-color 0.3s;  /* Hiệu ứng chuyển màu nền */
+    margin-top: 10px;
+  }
+  
+  .custom-file-upload:hover {
+    background-color: #a7b3a7;  /* Màu nền khi hover */
+  }
+  .liked-class {
+    color: red;
+  }
+  
